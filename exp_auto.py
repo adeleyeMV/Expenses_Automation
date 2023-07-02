@@ -6,10 +6,10 @@ import openpyxl
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import numbers
 
-EXPENSES_PATH = r"C:\Users\yaron\שולחן העבודה\expenses.xlsx"
-FOLDER_PATH = r"C:\Users\yaron\שולחן העבודה\תיקיה אישית\הוצאות"
-SUBSCRIPTIONS = ['SPOTIFYIL', 'APPLE', 'פיס מנויים']
-SAVING_DEPOSITS_DIC = {"אנליסט": 200}
+EXPENSES_PATH = r"___.xlsx"
+FOLDER_PATH = r"___"
+SUBSCRIPTIONS = []
+SAVING_DEPOSITS_DIC = {__:}
 
 def date_change(row):
     # Changes the date for transactions with multiple payments
