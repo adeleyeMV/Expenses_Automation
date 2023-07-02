@@ -1,4 +1,4 @@
-# Projects
+# Expenses automation
 Hello and welcome to my project!
 
 This project is a Python script that automates the process of organizing personal expenses.
