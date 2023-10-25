@@ -2,14 +2,14 @@ import pandas as pd
 import numpy as np
 import os
 import re
+import time
 import openpyxl
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import numbers
 
-EXPENSES_PATH = r"___.xlsx"
-FOLDER_PATH = r"___"
-SUBSCRIPTIONS = []
-SAVING_DEPOSITS_DIC = {__:}
+EXPENSES_PATH = r"C:\Users\yaron\שולחן העבודה\expenses.xlsx"
+SUBSCRIPTIONS = ['SPOTIFYIL', 'APPLE', 'פיס מנויים']
+SAVING_DEPOSITS_DIC = {"אנליסט": 600}
 
 def date_change(row):
     # Changes the date for transactions with multiple payments
@@ -60,7 +60,7 @@ def edit_month_file(month_path):
     #Add the regular deposits
     all_expenses = add_deposits(all_expenses)
 
-    return my_style(all_expenses)
+    return my_style(all_expenses.sort_values('תאריך'))
 
 def get_new_rows(main_df, new_df):
     #Gets 2 df, and returns the expenses that appears only at the second df.
@@ -68,27 +68,28 @@ def get_new_rows(main_df, new_df):
     new_rows = merged[merged['_merge'] == 'left_only']
     return new_rows
 
-def everything_added(main_df, new_df):
-    # Checks if all the expenses are already at the main expenses file.
+
+def ask_to_add(main_df, new_df):
+    # Show the new expenses and ask if to add them to the file.
     new_rows = get_new_rows(main_df, new_df)
     if len(new_rows) == 0:
         print(f"There are 0 new expenses.")
-        return True
+        return False
     else:
         print(f"There are {len(new_rows)} new expenses: ")
         print(new_rows[["תאריך", "שם בית העסק", "הערות", "חיוב"]].set_index("תאריך"))
         answer = input("To add press 1: ")
-        if answer == "1": return False
-        return True
+        if answer == "1": return True
+        return False
 
 
 def add_file(expenses_path, new):
     # Adds the new expenses to the expenses file, and ensures the data types
     # of the relevant columns
     ILS_FORMAT = '_ [$₪-he-IL] * #,##0.00_ ;_ [$₪-he-IL] * -#,##0.00_ ;_ [$₪-he-IL] * "-"??_ ;_ @_ '
-    expenses_table = pd.read_excel(expenses_path, sheet_name=0)
+    expenses_table = pd.read_excel(expenses_path, sheet_name="Data")
     wb = openpyxl.load_workbook(expenses_path)
-    ws = wb['exp']
+    ws = wb['Data']
 
     # Table reshape
     table_range = f'A1:H{len(expenses_table) + len(new) + 1}'
@@ -142,25 +143,56 @@ def my_style(df):
 
     df['קטגוריה'] = df['קטגוריה'].replace(
         {'מזון וצריכה': food, 'הלבשה והנעלה': cloth, 'כלבו': staff, "ספרים והוצ' משרד": staff})
-
+ 
     return df
 
+def choosing_interface(period, selected_year=2023):
+    #Getting the period (if it year or month). 
+    #Showing a user interface and return his choice.
+    
+    if period=="year": path = "Years"
+    elif period=="month": path = os.path.join("Years", selected_year)
+        
+    file_list = os.listdir(path)
+    
+
+    #If there is only 1 file, it will return it.
+    if len(file_list) == 1:
+        print(f"The {period} is {file_list[0]}")
+        return file_list[0]
+    
+    file_index_dict = {str(i): file for i, file in enumerate(file_list, 1)}
+    while True:
+        print(f"Choose a {period} of expenses:")
+        for index, file_name in file_index_dict.items():
+            print(f"For {file_name}- press {index}")
+    
+        # Get the desired index from the user
+        desired_index = input("> ")
+        
+        if (desired_index in file_index_dict.keys()):
+            # Get the selected year from the dictionary
+            return file_index_dict.get(desired_index)
+        else:
+            print("Invalid input.")
+            time.sleep(1.5)
+        
 
 def main():
     #Let's start!
-    main_df = pd.read_excel(EXPENSES_PATH, sheet_name=0)
-    month = input("Insert a month of expenses:  ")
-    file_name = f"{month}.xlsx"
-    file_path = os.path.join(FOLDER_PATH, file_name)
-    try:
+    while True:
+        year = choosing_interface("year")
+        month = choosing_interface("month",year)
+        
+        file_name = month
+        main_df = pd.read_excel(EXPENSES_PATH, sheet_name="Data")
+        file_path = os.path.join(f"Years\{year}", month)
         full_new_df = edit_month_file(file_path)
-        if not everything_added(main_df, full_new_df):
+
+        if ask_to_add(main_df, full_new_df):  # If the user decided to add the expenses.
             new_rows = get_new_rows(main_df, full_new_df)
             add_file(EXPENSES_PATH, full_new_df)
             print("Done")
-
-    except FileNotFoundError:
-        print("Error: the file doesn't exists")
-
+        
 
 main()
